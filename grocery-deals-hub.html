@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baldwin County Grocery Deal Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #181818;
+    --card: #1f1f1f;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --cream: #f5f0e8;
+    --muted: #888;
+    --accent: #e05c2a;
+    --green: #4caf6f;
+    --border: rgba(201,168,76,0.18);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    padding-bottom: 48px;
+  }
+
+  /* Background grain */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  header {
+    position: relative;
+    z-index: 1;
+    padding: 36px 20px 28px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(201,168,76,0.06) 0%, transparent 100%);
+  }
+
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(26px, 6vw, 40px);
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--cream);
+    letter-spacing: -0.01em;
+  }
+
+  h1 span {
+    color: var(--gold);
+  }
+
+  .subhead {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  .updated {
+    margin-top: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(201,168,76,0.1);
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    padding: 4px 14px;
+    font-size: 11px;
+    color: var(--gold-light);
+    letter-spacing: 0.04em;
+  }
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Flipp CTA */
+  .flipp-banner {
+    position: relative;
+    z-index: 1;
+    margin: 20px 16px 0;
+    background: linear-gradient(135deg, #1a2a1a 0%, #1a1a0a 100%);
+    border: 1px solid rgba(76, 175, 111, 0.3);
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    text-decoration: none;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .flipp-banner:hover { border-color: var(--green); transform: translateY(-1px); }
+  .flipp-banner-text { flex: 1; }
+  .flipp-banner-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--green);
+    font-weight: 500;
+    margin-bottom: 3px;
+  }
+  .flipp-banner-title {
+    font-size: 14px;
+    color: var(--cream);
+    font-weight: 500;
+  }
+  .flipp-banner-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .flipp-btn {
+    background: var(--green);
+    color: #0e0e0e;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 8px;
+    white-space: nowrap;
+    font-family: 'DM Sans', sans-serif;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  /* Category tabs */
+  .tabs {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 20px 16px 0;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    padding: 7px 16px;
+    border-radius: 30px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.18s;
+  }
+  .tab:hover { color: var(--cream); border-color: rgba(201,168,76,0.4); }
+  .tab.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #0e0e0e;
+    font-weight: 500;
+  }
+
+  /* Store grid */
+  .section-label {
+    position: relative;
+    z-index: 1;
+    padding: 20px 16px 8px;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 0 16px;
+  }
+
+  .store-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    text-decoration: none;
+    display: block;
+    transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .store-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(201,168,76,0.4);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .card-header {
+    padding: 14px 14px 10px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .store-emoji {
+    font-size: 22px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .badge {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+  .badge-bogo { background: rgba(224,92,42,0.15); color: #e07a5a; border: 1px solid rgba(224,92,42,0.3); }
+  .badge-hot  { background: rgba(201,168,76,0.12); color: var(--gold); border: 1px solid var(--border); }
+  .badge-deal { background: rgba(76,175,111,0.12); color: var(--green); border: 1px solid rgba(76,175,111,0.25); }
+
+  .card-body { padding: 0 14px 14px; }
+  .store-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--cream);
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  .store-desc {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .card-footer {
+    border-top: 1px solid var(--border);
+    padding: 9px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-link-label {
+    font-size: 10px;
+    color: var(--gold);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .arrow {
+    font-size: 12px;
+    color: var(--gold);
+    transition: transform 0.18s;
+  }
+  .store-card:hover .arrow { transform: translateX(3px); }
+
+  /* Full-width card variant */
+  .store-card.full {
+    grid-column: span 2;
+    display: flex;
+    align-items: center;
+  }
+  .store-card.full .card-header { padding-bottom: 14px; }
+  .store-card.full .card-body { flex: 1; padding-left: 0; padding-top: 0; }
+
+  /* Tips section */
+  .tips {
+    position: relative;
+    z-index: 1;
+    margin: 6px 16px 0;
+    background: rgba(201,168,76,0.05);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+  .tips-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .tip {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    gap: 8px;
+    line-height: 1.5;
+  }
+  .tip:last-child { border-bottom: none; }
+  .tip-icon { flex-shrink: 0; color: var(--gold); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* stagger cards */
+  .store-card:nth-child(1) { animation-delay: 0.05s; }
+  .store-card:nth-child(2) { animation-delay: 0.10s; }
+  .store-card:nth-child(3) { animation-delay: 0.15s; }
+  .store-card:nth-child(4) { animation-delay: 0.20s; }
+  .store-card:nth-child(5) { animation-delay: 0.25s; }
+  .store-card:nth-child(6) { animation-delay: 0.30s; }
+  .store-card:nth-child(7) { animation-delay: 0.35s; }
+  .store-card:nth-child(8) { animation-delay: 0.40s; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">36578 · Baldwin County, Alabama</div>
+  <h1>Your Weekly <span>Deal Hub</span></h1>
+  <div class="subhead">Tap any store to go straight to their current circular</div>
+  <div class="updated"><span class="dot"></span> Week of May 24, 2026</div>
+</header>
+
+<!-- Flipp CTA -->
+<a class="flipp-banner" href="https://flipp.com/en-us/bay-minette-al/weekly_ads" target="_blank" rel="noopener">
+  <div class="flipp-banner-text">
+    <div class="flipp-banner-label">⚡ Best All-In-One Tool</div>
+    <div class="flipp-banner-title">Search "BOGO" across ALL local ads</div>
+    <div class="flipp-banner-sub">Flipp scans every store at once — fastest way to find deals</div>
+  </div>
+  <div class="flipp-btn">Open Flipp →</div>
+</a>
+
+<!-- Grocery stores -->
+<div class="section-label">Grocery Stores</div>
+<div class="grid">
+
+  <a class="store-card" href="https://www.publix.com/savings/weekly-ad" target="_blank" rel="noopener">
+    <div class="card-header">
+      <span class="store-emoji">🛒</span>
+      <span class="badge badge-bogo">BOGO</span>
+    </div>
+    <div class="card-body">
+      <div class="store-name">Publix</div>
+      <div class="store-desc">Best BOGO selection. New ad Wed–Tue. Stack digital coupons for extra savings.</div>
+    </div>
+    <div class="card-footer">
+      <span class="card-link-label">View Ad</span>
+      <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="store-card" href="https://www.winndixie.com/weeklyad" target="_blank" rel="noopener">
+    <div class="card-header">
+      <span class="store-emoji">🏪</span>
+      <span class="badge badge-bogo">BOGO</span>
+    </div>
+    <div class="card-body">
+      <div class="store-name">Winn-Dixie</div>
+      <div class="store-desc">Strong meat & seafood BOGOs. Clip digital coupons in-app before you go.</div>
+    </div>
+    <div class="card-footer">
+      <span class="card-link-label">View Ad</span>
+      <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="store-card" href="https://www.rouses.com/weekly-ad/" target="_blank" rel="noopener">
+    <div class="card-header">
+      <span class="store-emoji">🦐</span>
+      <span class="badge badge-hot">Local Fave</span>
+    </div>
+    <div class="card-body">
+      <div class="store-name">Rouses</div>
+      <div class="store-desc">Gulf Coast staple. Great seafood & deli deals. 10-for-$10 specials weekly.</div>
+    </div>
+    <div class="card-footer">
+      <span class="card-link-label">View Ad</span>
+      <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="store-card" href="https://www.aldi.us/en/weekly-specials/" target="_blank" rel="noopener">
+    <div class="card-header">
+      <span class="store-emoji">💰</span>
+      <span class="badge badge-deal">Low Price</span>
+    </div>
+    <div class="card-body">
+      <div class="store-name">ALDI</div>
+      <div class="store-desc">No loyalty card needed. Everyday low prices + ALDI Finds change Wednesday.</div>
+    </div>
+    <div class="card-footer">
+      <span class="card-link-label">View Ad</span>
+      <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="store-card" href="https://www.pigglywiggly.com/weekly-ad" target="_blank" rel="noopener">
+    <div class="card-header">
+      <span class="store-emoji">🐷</span>
+      <span class="badge badge-hot">Local</span>
+    </div>
+    <div class="card-body">
+      <div class="store-name">Piggly Wiggly</div>
+      <div class="store-desc">Baldwin County staple. Good meat deals. Check the Cain's Foley location.</div>
+    </div>
+    <div class="card-footer">
+      <span class="card-link-label">View Ad</span>
+      <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="store-card" href="https://www.greerscashsaver.com/weekly-ad" target="_blank" rel="noopener">
+    <div class="card-header">
+      <span class="store-emoji">🧾</span>
+      <span class="badge badge-deal">Discount</span>
+    </div>
+    <div class="card-body">
+      <div class="store-name">Greer's CashSaver</div>
+      <div class="store-desc">Deep discount format. Great for pantry staples at no-frills prices.</div>
+    </div>
+    <div class="card-footer">
+      <span class="card-link-label">View Ad</span>
+      <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="store-card full" href="https://www.walmart.com/store-finder" target="_blank" rel="noopener">
+    <div class="card-header">
+      <span class="store-emoji">🔵</span>
+    </div>
+    <div class="card-body">
+      <div class="store-name">Walmart</div>
+      <div class="store-desc">Rollbacks + price matching. Flipp lists their ad weekly for easy scanning.</div>
+    </div>
+    <div class="card-footer">
+      <span class="card-link-label">Find Store</span>
+      <span class="arrow">→</span>
+    </div>
+  </a>
+
+</div>
+
+<!-- Pharmacy / Dollar stores -->
+<div class="section-label">Pharmacy & Dollar Stores</div>
+<div class="grid">
+
+  <a class="store-card" href="https://www.cvs.com/weekly-ad/cvs-weekly-ad.jsp" target="_blank" rel="noopener">
+    <div class="card-header">
+      <span class="store-emoji">💊</span>
+      <span class="badge badge-bogo">BOGO</span>
+    </div>
+    <div class="card-body">
+      <div class="store-name">CVS</div>
+      <div class="store-desc">ExtraBucks + weekly BOGOs on beauty & health. New ad Sunday.</div>
+    </div>
+    <div class="card-footer">
+      <span class="card-link-label">View Ad</span>
+      <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="store-card" href="https://www.walgreens.com/offers/offers.jsp" target="_blank" rel="noopener">
+    <div class="card-header">
+      <span class="store-emoji">💊</span>
+      <span class="badge badge-bogo">BOGO</span>
+    </div>
+    <div class="card-body">
+      <div class="store-name">Walgreens</div>
+      <div class="store-desc">myWalgreens BOGOs weekly. Rotating personal care deals every Sunday.</div>
+    </div>
+    <div class="card-footer">
+      <span class="card-link-label">View Ad</span>
+      <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="store-card" href="https://www.familydollar.com/weekly-ad.html" target="_blank" rel="noopener">
+    <div class="card-header">
+      <span class="store-emoji">🟡</span>
+      <span class="badge badge-deal">Deals</span>
+    </div>
+    <div class="card-body">
+      <div class="store-name">Family Dollar</div>
+      <div class="store-desc">$5 & under deals + household staples. Smart Coupons in-app.</div>
+    </div>
+    <div class="card-footer">
+      <span class="card-link-label">View Ad</span>
+      <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="store-card" href="https://www.dollargeneraldigitalcoupons.com" target="_blank" rel="noopener">
+    <div class="card-header">
+      <span class="store-emoji">🟡</span>
+      <span class="badge badge-deal">Deals</span>
+    </div>
+    <div class="card-body">
+      <div class="store-name">Dollar General</div>
+      <div class="store-desc">Right in Stapleton on Finley Ln. $5 Friday + digital coupon stacks.</div>
+    </div>
+    <div class="card-footer">
+      <span class="card-link-label">View Ad</span>
+      <span class="arrow">→</span>
+    </div>
+  </a>
+
+</div>
+
+<!-- Bulk / Club -->
+<div class="section-label">Bulk & Club</div>
+<div class="grid">
+
+  <a class="store-card" href="https://www.samsclub.com/savings" target="_blank" rel="noopener">
+    <div class="card-header">
+      <span class="store-emoji">📦</span>
+      <span class="badge badge-hot">Bulk</span>
+    </div>
+    <div class="card-body">
+      <div class="store-name">Sam's Club</div>
+      <div class="store-desc">Instant Savings flyer changes monthly. Great for meat & paper goods.</div>
+    </div>
+    <div class="card-footer">
+      <span class="card-link-label">View Savings</span>
+      <span class="arrow">→</span>
+    </div>
+  </a>
+
+  <a class="store-card" href="https://www.costco.com/savings-events.html" target="_blank" rel="noopener">
+    <div class="card-header">
+      <span class="store-emoji">📦</span>
+      <span class="badge badge-hot">Bulk</span>
+    </div>
+    <div class="card-body">
+      <div class="store-name">Costco</div>
+      <div class="store-desc">Monthly coupon book + Warehouse savings. Check Flipp for current deals.</div>
+    </div>
+    <div class="card-footer">
+      <span class="card-link-label">View Savings</span>
+      <span class="arrow">→</span>
+    </div>
+  </a>
+
+</div>
+
+<!-- Tips -->
+<div class="section-label">Pro Tips for Baldwin County</div>
+<div class="tips">
+  <div class="tips-title">💡 Stretch Every Dollar</div>
+  <div class="tip"><span class="tip-icon">★</span><span>You're in <strong style="color:var(--cream)">true BOGO territory</strong> — Publix requires buying one at full price to get one free (not half off). Ask for a rain check if an item sells out.</span></div>
+  <div class="tip"><span class="tip-icon">★</span><span>Stack <strong style="color:var(--cream)">Ibotta cash back</strong> on top of Publix BOGOs — some items drop under $2 each after rebate.</span></div>
+  <div class="tip"><span class="tip-icon">★</span><span>Rouses runs killer <strong style="color:var(--cream)">10-for-$10 deals</strong> and often has the best Gulf seafood prices in the county.</span></div>
+  <div class="tip"><span class="tip-icon">★</span><span>ALDI's ad resets <strong style="color:var(--cream)">every Wednesday</strong> — ALDI Finds sell out fast, so shop early in the week.</span></div>
+  <div class="tip"><span class="tip-icon">★</span><span>The <strong style="color:var(--cream)">Flipp app</strong> lets you search "BOGO" across every store at once — hands down the fastest scan.</span></div>
+</div>
+
+</body>
+</html>

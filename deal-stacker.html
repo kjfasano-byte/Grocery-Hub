@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deal Stacker · Baldwin County</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0e0e0e; font-family: 'DM Sans', 'Helvetica Neue', sans-serif; font-weight: 300; color: #f5f0e8; min-height: 100vh; }
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+input::placeholder { color: #444; }
+select option { background: #1a1a1a; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useCallback } = React;
+
+const CASHBACK_APPS = [
+  { name:"Ibotta", icon:"🟢", color:"#4caf6f", how:"Scan receipt or link loyalty card", best:"Publix, Walmart, Winn-Dixie", tip:"Stack on top of BOGOs — often $0.50–$3 per item", link:"https://ibotta.com" },
+  { name:"Fetch Rewards", icon:"🔵", color:"#4a90d9", how:"Snap any receipt — earns points on everything", best:"Every store, every receipt", tip:"No need to pre-select offers. Just scan after every trip.", link:"https://fetchrewards.com" },
+  { name:"Checkout 51", icon:"🟠", color:"#e07a3a", how:"Select offers before shopping, snap receipt after", best:"Produce & fresh items often included", tip:"Great for items Ibotta doesn't cover. Use both.", link:"https://checkout51.com" },
+  { name:"Rakuten", icon:"🔴", color:"#e05c5c", how:"Online orders — browser extension auto-applies", best:"Walmart.com, Target.com grocery pickup", tip:"3–10% cash back on online grocery orders & pickup.", link:"https://rakuten.com" },
+  { name:"Flipp", icon:"⭐", color:"#c9a84c", how:"Browse & clip deals across all local stores", best:"All Baldwin County stores", tip:"Search 'BOGO' to surface every current deal instantly.", link:"https://flipp.com/en-us/bay-minette-al/weekly_ads" },
+];
+
+const PRESETS = [
+  { name:"Smithfield Bacon 12–16oz", store:"Publix", regularPrice:9.99, bogo:true, mfrCoupon:0, storeCoupon:0, ibotta:0, checkout51:0, qty:2 },
+  { name:"Cheez-It Crackers 6.5–12.4oz", store:"Publix", regularPrice:5.08, bogo:true, mfrCoupon:1.25, storeCoupon:0, ibotta:0, checkout51:0, qty:2 },
+  { name:"Hellmann's Mayo 20oz", store:"Publix", regularPrice:7.09, bogo:true, mfrCoupon:0, storeCoupon:2.0, ibotta:0, checkout51:0, qty:2 },
+  { name:"Summ! Spring Rolls", store:"Publix", regularPrice:6.49, bogo:true, mfrCoupon:0, storeCoupon:0, ibotta:1.5, checkout51:0, qty:2 },
+  { name:"Clairol Root Touch-Up", store:"Publix", regularPrice:10.99, bogo:true, mfrCoupon:0, storeCoupon:6.0, ibotta:0, checkout51:0, qty:2 },
+];
+
+const STORES = ["Publix","Winn-Dixie","Rouses","ALDI","Piggly Wiggly","Walmart","Greer's CashSaver","CVS","Walgreens","Other"];
+
+const TIPS = [
+  { icon:"🥇", title:"The Perfect Stack", body:"BOGO + manufacturer coupon + store digital coupon + Ibotta rebate. Publix allows all four simultaneously. On a $9.99 BOGO item this can bring your cost to under $2 each." },
+  { icon:"📍", title:"True BOGO Zone (You're Here)", body:"Baldwin County is true BOGO territory — you must buy one at full price to get the second free. You can't just buy one at half off. But you CAN apply coupons to BOTH items." },
+  { icon:"🌧️", title:"Rain Check Power Move", body:"Publix will issue a rain check if a BOGO item is out of stock. You keep the coupon date, so any manufacturer coupon valid that day can still be used when you redeem the rain check later." },
+  { icon:"💳", title:"Stack Your Loyalty Cards", body:"Clip Publix digital coupons AND manufacturer coupons on the same item. Publix allows one of each. Add Ibotta on top. That's three layers on one product." },
+  { icon:"🧾", title:"Scan Every Receipt", body:"Even non-BOGO trips earn Fetch points. Fetch doesn't require pre-selecting offers — just snap the receipt after any purchase. Over time this adds up to real gift card money." },
+  { icon:"⏰", title:"Timing Matters", body:"Publix BOGOs reset Wednesday or Thursday depending on your store. Ibotta offers also expire weekly. Set a Sunday or Monday reminder to stack offers before shopping mid-week." },
+  { icon:"🏦", title:"Can You Actually Make Money?", body:"Yes — called 'moneymakers.' When BOGO + coupon + rebate exceeds the item price, you profit. The stacker will flag this in green. Common on personal care & snack items." },
+];
+
+function empty() {
+  return { name:"", store:"Publix", regularPrice:"", bogo:false, mfrCoupon:"", storeCoupon:"", ibotta:"", checkout51:"", qty:2 };
+}
+
+function calcStack(deal) {
+  const qty = Number(deal.qty)||1, reg = Number(deal.regularPrice)||0;
+  const mfr = Number(deal.mfrCoupon)||0, store = Number(deal.storeCoupon)||0;
+  const ibotta = Number(deal.ibotta)||0, c51 = Number(deal.checkout51)||0;
+  const subtotal = reg * qty;
+  const bogoSavings = deal.bogo ? reg : 0;
+  const afterBogo = subtotal - bogoSavings;
+  const afterCoupons = Math.max(0, afterBogo - mfr - store);
+  const cashBack = ibotta + c51;
+  const finalCost = Math.max(-99, afterCoupons - cashBack);
+  const totalSavings = subtotal - Math.max(0, finalCost);
+  const pctOff = subtotal > 0 ? Math.round((totalSavings / subtotal) * 100) : 0;
+  const perItem = qty > 0 ? Math.max(0,finalCost) / qty : 0;
+  const profit = finalCost < 0;
+  return { subtotal, bogoSavings, afterBogo, afterCoupons, cashBack, finalCost, totalSavings, pctOff, perItem, profit };
+}
+
+function fmt(n) { return n < 0 ? `-$${Math.abs(n).toFixed(2)}` : `$${Number(n).toFixed(2)}`; }
+
+function ScoreBar({ pct }) {
+  const color = pct >= 80 ? "#4caf6f" : pct >= 50 ? "#c9a84c" : pct >= 25 ? "#e07a3a" : "#888";
+  return (
+    <div style={{marginTop:6}}>
+      <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:"#888",marginBottom:3}}>
+        <span>Savings Score</span>
+        <span style={{color,fontWeight:600}}>{pct}% off</span>
+      </div>
+      <div style={{height:5,borderRadius:99,background:"#2a2a2a",overflow:"hidden"}}>
+        <div style={{width:`${Math.min(pct,100)}%`,height:"100%",background:color,borderRadius:99,transition:"width 0.4s ease"}} />
+      </div>
+    </div>
+  );
+}
+
+function NumInput({ label, value, onChange }) {
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:4}}>
+      <label style={{fontSize:10,color:"#888",letterSpacing:"0.1em",textTransform:"uppercase"}}>{label}</label>
+      <input type="number" value={value} onChange={e=>onChange(e.target.value)} inputMode="decimal"
+        style={{background:"#111",border:"1px solid rgba(201,168,76,0.2)",borderRadius:8,padding:"7px 10px",color:"#f5f0e8",fontSize:12,fontFamily:"inherit",outline:"none",width:"100%"}}
+        placeholder="0.00" />
+    </div>
+  );
+}
+
+function DealCard({ deal, onUpdate, onRemove }) {
+  const calc = calcStack(deal);
+  const rows = [
+    { label:`Shelf price (×${deal.qty})`, val:calc.subtotal, color:"#888" },
+    deal.bogo && { label:"BOGO savings", val:-calc.bogoSavings, color:"#c9a84c" },
+    Number(deal.mfrCoupon)>0 && { label:"Mfr coupon", val:-Number(deal.mfrCoupon), color:"#c9a84c" },
+    Number(deal.storeCoupon)>0 && { label:"Store coupon", val:-Number(deal.storeCoupon), color:"#c9a84c" },
+    Number(deal.ibotta)>0 && { label:"Ibotta rebate", val:-Number(deal.ibotta), color:"#4caf6f" },
+    Number(deal.checkout51)>0 && { label:"Checkout 51", val:-Number(deal.checkout51), color:"#4caf6f" },
+  ].filter(Boolean);
+
+  return (
+    <div style={{background:"#1a1a1a",border:`1px solid ${calc.profit?"rgba(76,175,111,0.5)":"rgba(201,168,76,0.15)"}`,borderRadius:16,overflow:"hidden",marginBottom:12,animation:"fadeUp 0.3s ease both"}}>
+      <div style={{padding:"12px 14px 10px",borderBottom:"1px solid rgba(255,255,255,0.05)",display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+        <div style={{flex:1,minWidth:0}}>
+          <input value={deal.name} onChange={e=>onUpdate("name",e.target.value)} placeholder="Item name…"
+            style={{background:"transparent",border:"none",color:"#f5f0e8",fontSize:14,fontWeight:500,fontFamily:"inherit",width:"100%",outline:"none"}} />
+          <select value={deal.store} onChange={e=>onUpdate("store",e.target.value)}
+            style={{background:"transparent",border:"none",color:"#888",fontSize:11,fontFamily:"inherit",outline:"none",marginTop:2,cursor:"pointer"}}>
+            {STORES.map(s=><option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+        <button onClick={onRemove} style={{background:"none",border:"none",color:"#444",cursor:"pointer",fontSize:16,padding:"0 0 0 8px",flexShrink:0}}>✕</button>
+      </div>
+
+      <div style={{padding:"12px 14px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        <NumInput label="Regular Price" value={deal.regularPrice} onChange={v=>onUpdate("regularPrice",v)} />
+        <div style={{display:"flex",flexDirection:"column",gap:4}}>
+          <label style={{fontSize:10,color:"#888",letterSpacing:"0.1em",textTransform:"uppercase"}}>Qty to Buy</label>
+          <select value={deal.qty} onChange={e=>onUpdate("qty",e.target.value)}
+            style={{background:"#111",border:"1px solid rgba(201,168,76,0.2)",borderRadius:8,padding:"7px 10px",color:"#f5f0e8",fontSize:12,fontFamily:"inherit",outline:"none"}}>
+            {[1,2,3,4,5,6].map(n=><option key={n} value={n}>{n}</option>)}
+          </select>
+        </div>
+
+        <div style={{gridColumn:"span 2",display:"flex",alignItems:"center",gap:10,padding:"6px 0"}}>
+          <div onClick={()=>onUpdate("bogo",!deal.bogo)}
+            style={{width:38,height:22,borderRadius:99,cursor:"pointer",background:deal.bogo?"#c9a84c":"#2a2a2a",position:"relative",transition:"background 0.2s",flexShrink:0}}>
+            <div style={{position:"absolute",top:3,left:deal.bogo?18:3,width:16,height:16,borderRadius:99,background:"#fff",transition:"left 0.2s"}} />
+          </div>
+          <span style={{fontSize:12,color:deal.bogo?"#c9a84c":"#666"}}>{deal.bogo?"✓ BOGO (buy 1 get 1 free)":"No BOGO"}</span>
+        </div>
+
+        <NumInput label="Mfr Coupon $" value={deal.mfrCoupon} onChange={v=>onUpdate("mfrCoupon",v)} />
+        <NumInput label="Store Coupon $" value={deal.storeCoupon} onChange={v=>onUpdate("storeCoupon",v)} />
+        <NumInput label="Ibotta $" value={deal.ibotta} onChange={v=>onUpdate("ibotta",v)} />
+        <NumInput label="Checkout 51 $" value={deal.checkout51} onChange={v=>onUpdate("checkout51",v)} />
+      </div>
+
+      <div style={{background:"#111",padding:"12px 14px",borderTop:"1px solid rgba(255,255,255,0.05)"}}>
+        <div style={{fontSize:10,color:"#666",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8}}>Stack Breakdown</div>
+        {rows.map((row,i)=>(
+          <div key={i} style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}>
+            <span style={{color:"#888"}}>{row.label}</span>
+            <span style={{color:row.color,fontWeight:500}}>{fmt(row.val)}</span>
+          </div>
+        ))}
+        <div style={{borderTop:"1px solid rgba(255,255,255,0.08)",marginTop:8,paddingTop:8,display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+          <span style={{fontSize:11,color:"#888"}}>You pay · <span style={{color:"#666"}}>{fmt(calc.perItem)}/ea</span></span>
+          <span style={{fontSize:18,fontWeight:700,color:calc.profit?"#4caf6f":"#f5f0e8"}}>
+            {calc.profit?`+${fmt(Math.abs(calc.finalCost))} profit!`:fmt(Math.max(0,calc.finalCost))}
+          </span>
+        </div>
+        <ScoreBar pct={calc.pctOff} />
+      </div>
+    </div>
+  );
+}
+
+function AppCard({ app }) {
+  return (
+    <a href={app.link} target="_blank" rel="noopener"
+      style={{display:"block",textDecoration:"none",background:"#1a1a1a",border:"1px solid rgba(201,168,76,0.12)",borderRadius:14,padding:"12px 14px",marginBottom:8,transition:"border-color 0.18s,transform 0.18s"}}
+      onMouseEnter={e=>{e.currentTarget.style.borderColor=app.color+"55";e.currentTarget.style.transform="translateY(-1px)";}}
+      onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(201,168,76,0.12)";e.currentTarget.style.transform="none";}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+        <span style={{fontSize:18}}>{app.icon}</span>
+        <span style={{fontSize:14,fontWeight:500,color:"#f5f0e8"}}>{app.name}</span>
+        <span style={{marginLeft:"auto",fontSize:10,color:app.color,background:app.color+"18",border:`1px solid ${app.color}33`,borderRadius:20,padding:"2px 10px",letterSpacing:"0.06em",textTransform:"uppercase",fontWeight:500}}>Free</span>
+      </div>
+      <div style={{fontSize:11,color:"#888",lineHeight:1.5}}>
+        <div><span style={{color:"#666"}}>How: </span>{app.how}</div>
+        <div><span style={{color:"#666"}}>Best at: </span>{app.best}</div>
+        <div style={{marginTop:4,color:app.color}}>💡 {app.tip}</div>
+      </div>
+    </a>
+  );
+}
+
+function App() {
+  const [deals, setDeals] = useState([{...PRESETS[0]}]);
+  const [tab, setTab] = useState("stacker");
+
+  const addDeal = useCallback(preset => setDeals(d=>[...d, preset?{...preset}:empty()]), []);
+  const updateDeal = useCallback((i,field,val) => setDeals(d=>d.map((deal,j)=>j===i?{...deal,[field]:val}:deal)), []);
+  const removeDeal = useCallback(i => setDeals(d=>d.filter((_,j)=>j!==i)), []);
+
+  const totals = deals.reduce((acc,deal)=>{
+    const c=calcStack(deal);
+    return {spend:acc.spend+Math.max(0,c.finalCost), saved:acc.saved+c.totalSavings};
+  },{spend:0,saved:0});
+  const totalPct = (totals.spend+totals.saved)>0 ? Math.round((totals.saved/(totals.spend+totals.saved))*100) : 0;
+
+  return (
+    <div style={{minHeight:"100vh",background:"#0e0e0e",fontFamily:"'DM Sans','Helvetica Neue',sans-serif",fontWeight:300,color:"#f5f0e8",paddingBottom:48}}>
+
+      {/* Header */}
+      <div style={{padding:"28px 16px 20px",background:"linear-gradient(180deg,rgba(201,168,76,0.07) 0%,transparent 100%)",borderBottom:"1px solid rgba(201,168,76,0.12)",textAlign:"center"}}>
+        <div style={{fontSize:10,letterSpacing:"0.22em",textTransform:"uppercase",color:"#c9a84c",marginBottom:8,fontWeight:500}}>Baldwin County · 36578</div>
+        <div style={{fontFamily:"'Playfair Display',serif",fontSize:26,fontWeight:900,lineHeight:1.1,color:"#f5f0e8"}}>
+          Deal <span style={{color:"#c9a84c"}}>Stacker</span>
+        </div>
+        <div style={{fontSize:12,color:"#666",marginTop:6}}>Stack BOGOs · coupons · rebates for max savings</div>
+      </div>
+
+      {/* Totals bar */}
+      {deals.length>0 && (
+        <div style={{display:"flex",background:"#151515",borderBottom:"1px solid rgba(201,168,76,0.1)",padding:"10px 16px"}}>
+          {[{label:"You Spend",val:fmt(totals.spend),color:"#f5f0e8"},{label:"You Save",val:fmt(totals.saved),color:"#4caf6f"},{label:"Total Off",val:`${totalPct}%`,color:"#c9a84c"}].map((s,i)=>(
+            <div key={i} style={{flex:1,textAlign:"center",borderRight:i<2?"1px solid rgba(255,255,255,0.06)":"none"}}>
+              <div style={{fontSize:16,fontWeight:600,color:s.color}}>{s.val}</div>
+              <div style={{fontSize:9,color:"#555",letterSpacing:"0.1em",textTransform:"uppercase",marginTop:2}}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Tabs */}
+      <div style={{display:"flex",borderBottom:"1px solid rgba(201,168,76,0.1)",background:"#121212"}}>
+        {[{key:"stacker",label:"🧮 Stacker"},{key:"apps",label:"💰 Cash Back"},{key:"tips",label:"💡 Tips"}].map(t=>(
+          <button key={t.key} onClick={()=>setTab(t.key)} style={{flex:1,padding:"11px 4px",background:"none",border:"none",borderBottom:tab===t.key?"2px solid #c9a84c":"2px solid transparent",color:tab===t.key?"#c9a84c":"#555",fontSize:11,fontFamily:"inherit",fontWeight:tab===t.key?500:400,cursor:"pointer",transition:"color 0.18s",letterSpacing:"0.02em"}}>{t.label}</button>
+        ))}
+      </div>
+
+      {/* Stacker */}
+      {tab==="stacker" && (
+        <div style={{padding:"0 16px"}}>
+          <div style={{padding:"14px 0 10px"}}>
+            <div style={{fontSize:10,color:"#666",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:8}}>This Week's Publix BOGOs — tap to load</div>
+            <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4,scrollbarWidth:"none"}}>
+              {PRESETS.map((p,i)=>(
+                <button key={i} onClick={()=>addDeal(p)} style={{flexShrink:0,background:"#1a1a1a",border:"1px solid rgba(201,168,76,0.2)",borderRadius:10,padding:"7px 12px",color:"#c9a84c",fontSize:11,fontFamily:"inherit",cursor:"pointer",whiteSpace:"nowrap"}}>
+                  + {p.name.split(" ").slice(0,2).join(" ")}
+                </button>
+              ))}
+            </div>
+          </div>
+          {deals.length===0 && <div style={{textAlign:"center",padding:"40px 0",color:"#444",fontSize:13}}>No deals yet — load a preset or add your own.</div>}
+          {deals.map((deal,i)=>(
+            <DealCard key={i} deal={deal} onUpdate={(f,v)=>updateDeal(i,f,v)} onRemove={()=>removeDeal(i)} />
+          ))}
+          <button onClick={()=>addDeal(null)} style={{width:"100%",padding:"13px",background:"transparent",border:"1px dashed rgba(201,168,76,0.25)",borderRadius:14,color:"#c9a84c",fontSize:13,fontFamily:"inherit",cursor:"pointer",letterSpacing:"0.04em"}}
+            onMouseEnter={e=>{e.currentTarget.style.background="rgba(201,168,76,0.05)";e.currentTarget.style.borderColor="rgba(201,168,76,0.5)";}}
+            onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.borderColor="rgba(201,168,76,0.25)";}}>
+            + Add Custom Deal
+          </button>
+        </div>
+      )}
+
+      {/* Apps */}
+      {tab==="apps" && (
+        <div style={{padding:"16px 16px 0"}}>
+          <div style={{fontSize:12,color:"#666",marginBottom:14,lineHeight:1.6}}>All <span style={{color:"#c9a84c"}}>free</span> — stack on top of BOGOs and coupons. Start with Ibotta + Fetch for max coverage.</div>
+          {CASHBACK_APPS.map((app,i)=><AppCard key={i} app={app} />)}
+        </div>
+      )}
+
+      {/* Tips */}
+      {tab==="tips" && (
+        <div style={{padding:"16px 16px 0"}}>
+          {TIPS.map((tip,i)=>(
+            <div key={i} style={{background:"#1a1a1a",border:"1px solid rgba(201,168,76,0.12)",borderRadius:14,padding:"14px 16px",marginBottom:10,animation:`fadeUp 0.3s ease ${i*0.05}s both`}}>
+              <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:6}}>
+                <span style={{fontSize:18}}>{tip.icon}</span>
+                <span style={{fontSize:13,fontWeight:500,color:"#f5f0e8"}}>{tip.title}</span>
+              </div>
+              <p style={{fontSize:12,color:"#888",lineHeight:1.6,margin:0}}>{tip.body}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

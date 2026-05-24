@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Janet's Grocery Hub · Baldwin County</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0e0e0e; font-family: 'DM Sans', sans-serif; font-weight: 300; color: #f5f0e8; min-height: 100vh; display: flex; flex-direction: column; }
+header { padding: 36px 20px 24px; text-align: center; border-bottom: 1px solid rgba(201,168,76,0.15); background: linear-gradient(180deg, rgba(201,168,76,0.07) 0%, transparent 100%); }
+.eye { font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: #c9a84c; margin-bottom: 10px; font-weight: 500; }
+h1 { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 900; color: #f5f0e8; }
+h1 span { color: #c9a84c; }
+.sub { font-size: 12px; color: #666; margin-top: 6px; }
+.cards { padding: 24px 16px; display: flex; flex-direction: column; gap: 14px; }
+a.card { display: block; text-decoration: none; background: #1a1a1a; border: 1px solid rgba(201,168,76,0.18); border-radius: 18px; padding: 20px; transition: transform 0.18s, border-color 0.18s; }
+a.card:hover { transform: translateY(-2px); border-color: rgba(201,168,76,0.45); }
+.card-top { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+.card-icon { font-size: 28px; }
+.card-title { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: #f5f0e8; }
+.card-badge { margin-left: auto; font-size: 9px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.25); color: #c9a84c; flex-shrink: 0; }
+.card-desc { font-size: 12px; color: #888; line-height: 1.6; }
+.card-link { margin-top: 12px; font-size: 11px; color: #c9a84c; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; }
+footer { margin-top: auto; padding: 20px; text-align: center; font-size: 11px; color: #333; }
+</style>
+</head>
+<body>
+<header>
+  <div class="eye">36578 · Baldwin County, Alabama</div>
+  <h1>Janet's <span>Grocery Hub</span></h1>
+  <div class="sub">Your personal deal-finding toolkit</div>
+</header>
+<div class="cards">
+  <a class="card" href="deal-stacker.html">
+    <div class="card-top">
+      <span class="card-icon">🧮</span>
+      <span class="card-title">Deal Stacker</span>
+      <span class="card-badge">Interactive</span>
+    </div>
+    <div class="card-desc">Stack BOGOs, manufacturer coupons, store coupons, and cash-back rebates to calculate your true out-of-pocket cost. Flags moneymaker deals in green.</div>
+    <div class="card-link">Open Stacker →</div>
+  </a>
+  <a class="card" href="grocery-deals-hub.html">
+    <div class="card-top">
+      <span class="card-icon">🛒</span>
+      <span class="card-title">Deal Hub</span>
+      <span class="card-badge">All Stores</span>
+    </div>
+    <div class="card-desc">One-tap links to every grocery store circular in Baldwin County — Publix, Winn-Dixie, Rouses, ALDI, Piggly Wiggly, Greer's, Walmart, and more.</div>
+    <div class="card-link">Open Hub →</div>
+  </a>
+</div>
+<footer>Made for Baldwin County · Updated weekly</footer>
+</body>
+</html>
