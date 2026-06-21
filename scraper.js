@@ -7,6 +7,10 @@ const fs = require('fs');
 
 const weekOf = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
+// Hand-verified fallback data — last manually confirmed by Claude against real
+// app screenshots / flyer pages. Update FALLBACK_AS_OF whenever this list is refreshed.
+const FALLBACK_AS_OF = "June 20, 2026";
+
 function fetch(url, options = {}) {
   return new Promise((resolve, reject) => {
     const lib = url.startsWith('https') ? https : http;
@@ -129,15 +133,77 @@ async function fetchWinnDixieDeals() {
   return deals;
 }
 
-// Hardcoded known-good fallback deals (updated manually by Claude each week if scrape fails)
+// Pull Dollar General deals. DG's own digital coupons live behind a logged-in
+// app session and can't be scraped directly, so this targets public deal blogs
+// that publish DG ad + coupon matchups each week (item-level "DG Digital" coupons,
+// not the in-app-only "spend $X" storewide offers — those still require checking
+// the app since they're account-specific).
+async function fetchDollarGeneralDeals() {
+  const deals = [];
+  const sources = [
+    'https://hip2save.com/deals/dollar-general-deals/',
+    'https://thekrazycouponlady.com/tips/store/dollar-general',
+  ];
+
+  for (const url of sources) {
+    if (deals.length >= 8) break;
+    try {
+      console.log(`Trying ${url} for Dollar General deals...`);
+      const res = await fetch(url);
+      if (res.status !== 200) continue;
+      const html = res.body;
+
+      // Pattern A: "ItemName $X.XX, Use $Y DG Digital Coupon, Final Price $Z.ZZ"
+      const stackPattern = /([A-Z][A-Za-z0-9®'’.\- ]{4,55})[^$]{0,40}\$(\d+\.\d{2})[^$]{0,60}(?:DG\s*Digital|Dollar General\s*Digital)\s*Coupon[^$]{0,30}\$(\d+(?:\.\d{2})?)[^$]{0,60}Final\s*Price[^$]{0,10}\$(\d+\.\d{2})/gi;
+      let m;
+      while ((m = stackPattern.exec(html)) !== null && deals.length < 8) {
+        const name = m[1].replace(/https?:\/\/[^\s]+/g, '').trim();
+        const regularPrice = parseFloat(m[2]);
+        const storeCoupon = parseFloat(m[3]);
+        if (name.length > 3 && regularPrice > 0) {
+          deals.push({ name, store: 'Dollar General', regularPrice, bogo: false, mfrCoupon: 0, storeCoupon, ibotta: 0, checkout51: 0, qty: 1 });
+        }
+      }
+
+      // Pattern B (looser): "$X off ONE [Item]" digital coupon callouts without a paired price
+      if (deals.length === 0) {
+        const couponOnlyPattern = /\$(\d+(?:\.\d{2})?)\s*off\s*ONE\s+([A-Z][A-Za-z0-9®'’.\- ]{4,55})/gi;
+        while ((m = couponOnlyPattern.exec(html)) !== null && deals.length < 8) {
+          const storeCoupon = parseFloat(m[1]);
+          const name = m[2].trim();
+          if (name.length > 3 && storeCoupon > 0) {
+            // No shelf price available from this pattern — leave regularPrice at 0
+            // so it's obviously incomplete rather than silently wrong.
+            deals.push({ name, store: 'Dollar General', regularPrice: 0, bogo: false, mfrCoupon: 0, storeCoupon, ibotta: 0, checkout51: 0, qty: 1 });
+          }
+        }
+      }
+
+      console.log(`${url}: found ${deals.length} Dollar General deals so far`);
+    } catch (e) {
+      console.log(`${url} unavailable:`, e.message);
+    }
+  }
+
+  // Drop any deal scraped with no usable price — better to show fewer real
+  // deals than ones missing the number that actually matters.
+  return deals.filter(d => d.regularPrice > 0 || d.storeCoupon > 0);
+}
+
+// Hand-verified fallback deals — used only when every live scrape comes back
+// empty. Kept honest in the UI via FALLBACK_AS_OF + the source flag below,
+// so stale data is always labeled as stale instead of pretending to be fresh.
 function fallbackDeals() {
-  console.log('Using fallback deals');
+  console.log('Using fallback deals (last verified ' + FALLBACK_AS_OF + ')');
   return [
     { name: "Smithfield Bacon 12–16oz", store: "Publix", regularPrice: 9.99, bogo: true, mfrCoupon: 0, storeCoupon: 0, ibotta: 0, checkout51: 0, qty: 2 },
     { name: "Cheez-It Crackers 6.5–12.4oz", store: "Publix", regularPrice: 5.08, bogo: true, mfrCoupon: 1.25, storeCoupon: 0, ibotta: 0, checkout51: 0, qty: 2 },
     { name: "Hellmann's Mayo 20oz", store: "Publix", regularPrice: 7.09, bogo: true, mfrCoupon: 0, storeCoupon: 2.00, ibotta: 0, checkout51: 0, qty: 2 },
     { name: "Summ! Spring Rolls", store: "Publix", regularPrice: 6.49, bogo: true, mfrCoupon: 0, storeCoupon: 0, ibotta: 1.50, checkout51: 0, qty: 2 },
     { name: "Clairol Root Touch-Up", store: "Publix", regularPrice: 10.99, bogo: true, mfrCoupon: 0, storeCoupon: 6.00, ibotta: 0, checkout51: 0, qty: 2 },
+    { name: "Gain Plus Liquid Detergent 75ld/99oz", store: "Dollar General", regularPrice: 13.45, bogo: false, mfrCoupon: 0, storeCoupon: 3.00, ibotta: 0, checkout51: 0, qty: 1 },
+    { name: "Gain Flings 24ct / Softener 98ld / Sheets / Powder", store: "Dollar General", regularPrice: 7.50, bogo: false, mfrCoupon: 0, storeCoupon: 2.00, ibotta: 0, checkout51: 0, qty: 1 },
+    { name: "Gain Flings 60ct / Original 100ld / Fireworks", store: "Dollar General", regularPrice: 15.95, bogo: false, mfrCoupon: 0, storeCoupon: 3.00, ibotta: 0, checkout51: 0, qty: 1 },
   ];
 }
 
@@ -145,16 +211,24 @@ async function run() {
   console.log(`\n=== Weekly scrape: ${weekOf} ===`);
   let deals = [];
 
-  const [publix, winndixie] = await Promise.allSettled([
+  const [publix, winndixie, dollargeneral] = await Promise.allSettled([
     fetchPublixDeals(),
     fetchWinnDixieDeals(),
+    fetchDollarGeneralDeals(),
   ]);
 
   if (publix.status === 'fulfilled') deals.push(...publix.value);
   if (winndixie.status === 'fulfilled') deals.push(...winndixie.value);
+  if (dollargeneral.status === 'fulfilled') deals.push(...dollargeneral.value);
 
-  // Fall back if nothing scraped
-  if (deals.length === 0) deals = fallbackDeals();
+  // Fall back if nothing scraped from any store — track this explicitly
+  // instead of comparing array references (that comparison was always false,
+  // which silently mislabeled stale fallback data as freshly "scraped").
+  let usedFallback = false;
+  if (deals.length === 0) {
+    deals = fallbackDeals();
+    usedFallback = true;
+  }
 
   // Sort by savings % descending
   deals.sort((a, b) => {
@@ -166,18 +240,19 @@ async function run() {
   const output = {
     weekOf,
     updatedAt: new Date().toISOString(),
-    source: deals === fallbackDeals() ? 'fallback' : 'scraped',
+    source: usedFallback ? 'fallback' : 'scraped',
+    fallbackAsOf: FALLBACK_AS_OF,
     deals
   };
 
   fs.writeFileSync('deals-data.json', JSON.stringify(output, null, 2));
-  console.log(`\n✓ Wrote ${deals.length} deals to deals-data.json`);
+  console.log(`\n✓ Wrote ${deals.length} deals to deals-data.json (source: ${output.source})`);
   console.log('Top deal:', deals[0]?.name);
 }
 
 run().catch(e => {
   console.error('Fatal error:', e);
-  // Write fallback so the site always has data
-  const output = { weekOf, updatedAt: new Date().toISOString(), source: 'fallback', deals: fallbackDeals() };
+  // Write fallback so the site always has data, clearly labeled as such
+  const output = { weekOf, updatedAt: new Date().toISOString(), source: 'fallback', fallbackAsOf: FALLBACK_AS_OF, deals: fallbackDeals() };
   fs.writeFileSync('deals-data.json', JSON.stringify(output, null, 2));
 });
