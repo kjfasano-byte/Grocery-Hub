@@ -14,6 +14,21 @@ try {
     console.log('⚠ PRESETS pattern not found — HTML structure may have changed');
   }
 
+  // Replace the freshness/status banner config so the site always tells the
+  // truth about whether this week's deals are live or fallback data.
+  const statusJson = JSON.stringify({
+    source: data.source || 'fallback',
+    weekOf: data.weekOf,
+    fallbackAsOf: data.fallbackAsOf || data.weekOf,
+  });
+  const statusRegex = /const DATA_STATUS = \{[\s\S]*?\};/;
+  if (statusRegex.test(html)) {
+    html = html.replace(statusRegex, 'const DATA_STATUS = ' + statusJson + ';');
+    console.log('✓ Replaced DATA_STATUS banner config (source: ' + data.source + ')');
+  } else {
+    console.log('⚠ DATA_STATUS pattern not found — HTML structure may have changed');
+  }
+
   // Replace any week label
   html = html.replace(/Week of [A-Za-z]+ \d{1,2},? \d{4}/g, 'Week of ' + data.weekOf);
 
