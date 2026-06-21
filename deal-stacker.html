@@ -88,10 +88,45 @@ const PRESETS = [
     "ibotta": 0,
     "checkout51": 0,
     "qty": 2
+  },
+  {
+    "name": "Gain Plus Liquid Detergent 75ld/99oz",
+    "store": "Dollar General",
+    "regularPrice": 13.45,
+    "bogo": false,
+    "mfrCoupon": 0,
+    "storeCoupon": 3,
+    "ibotta": 0,
+    "checkout51": 0,
+    "qty": 1
+  },
+  {
+    "name": "Gain Flings 60ct / Original 100ld / Fireworks",
+    "store": "Dollar General",
+    "regularPrice": 15.95,
+    "bogo": false,
+    "mfrCoupon": 0,
+    "storeCoupon": 3,
+    "ibotta": 0,
+    "checkout51": 0,
+    "qty": 1
+  },
+  {
+    "name": "Gain Flings 24ct / Softener 98ld / Sheets / Powder",
+    "store": "Dollar General",
+    "regularPrice": 7.5,
+    "bogo": false,
+    "mfrCoupon": 0,
+    "storeCoupon": 2,
+    "ibotta": 0,
+    "checkout51": 0,
+    "qty": 1
   }
 ];
 
-const STORES = ["Publix","Winn-Dixie","Rouses","ALDI","Piggly Wiggly","Walmart","Greer's CashSaver","CVS","Walgreens","Other"];
+const STORES = ["Publix","Dollar General","Winn-Dixie","Rouses","ALDI","Piggly Wiggly","Walmart","Greer's CashSaver","CVS","Walgreens","Other"];
+
+const DATA_STATUS = {"source":"fallback","weekOf":"June 20, 2026","fallbackAsOf":"June 20, 2026"};
 
 const TIPS = [
   { icon:"🥇", title:"The Perfect Stack", body:"BOGO + manufacturer coupon + store digital coupon + Ibotta rebate. Publix allows all four simultaneously. On a $9.99 BOGO item this can bring your cost to under $2 each." },
@@ -101,6 +136,7 @@ const TIPS = [
   { icon:"🧾", title:"Scan Every Receipt", body:"Even non-BOGO trips earn Fetch points. Fetch doesn't require pre-selecting offers — just snap the receipt after any purchase. Over time this adds up to real gift card money." },
   { icon:"⏰", title:"Timing Matters", body:"Publix BOGOs reset Wednesday or Thursday depending on your store. Ibotta offers also expire weekly. Set a Sunday or Monday reminder to stack offers before shopping mid-week." },
   { icon:"🏦", title:"Can You Actually Make Money?", body:"Yes — called 'moneymakers.' When BOGO + coupon + rebate exceeds the item price, you profit. The stacker will flag this in green. Common on personal care & snack items." },
+  { icon:"🏪", title:"Dollar General Stacking Caution", body:"DG's storewide 'spend $X save $5' coupons usually only let ONE apply per transaction — they often won't stack with each other, even if you qualify for two. Item-specific digital coupons (like a flat $ off one product) typically DO stack on top of one spend-threshold coupon. Confirm at checkout before counting on a double spend-discount." },
 ];
 
 function empty() {
@@ -241,6 +277,18 @@ function AppCard({ app }) {
   );
 }
 
+function FreshnessBanner() {
+  const isLive = DATA_STATUS.source === "scraped";
+  const color = isLive ? "#4caf6f" : "#c9a84c";
+  return (
+    <div style={{margin:"10px 16px 0",padding:"9px 12px",borderRadius:10,background:color+"14",border:`1px solid ${color}33`,fontSize:11,color,lineHeight:1.5}}>
+      {isLive
+        ? <>✓ Live deals refreshed {DATA_STATUS.weekOf}</>
+        : <>⚠ Couldn't auto-refresh this week — showing deals last hand-verified {DATA_STATUS.fallbackAsOf}. Prices/coupons may have changed.</>}
+    </div>
+  );
+}
+
 function App() {
   const [deals, setDeals] = useState([{...PRESETS[0]}]);
   const [tab, setTab] = useState("stacker");
@@ -279,6 +327,8 @@ function App() {
         </div>
       )}
 
+      <FreshnessBanner />
+
       {/* Tabs */}
       <div style={{display:"flex",borderBottom:"1px solid rgba(201,168,76,0.1)",background:"#121212"}}>
         {[{key:"stacker",label:"🧮 Stacker"},{key:"apps",label:"💰 Cash Back"},{key:"tips",label:"💡 Tips"}].map(t=>(
@@ -290,11 +340,12 @@ function App() {
       {tab==="stacker" && (
         <div style={{padding:"0 16px"}}>
           <div style={{padding:"14px 0 10px"}}>
-            <div style={{fontSize:10,color:"#666",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:8}}>This Week's Publix BOGOs — tap to load</div>
+            <div style={{fontSize:10,color:"#666",letterSpacing:"0.14em",textTransform:"uppercase",marginBottom:8}}>This Week's Deals — tap to load</div>
             <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4,scrollbarWidth:"none"}}>
               {PRESETS.map((p,i)=>(
-                <button key={i} onClick={()=>addDeal(p)} style={{flexShrink:0,background:"#1a1a1a",border:"1px solid rgba(201,168,76,0.2)",borderRadius:10,padding:"7px 12px",color:"#c9a84c",fontSize:11,fontFamily:"inherit",cursor:"pointer",whiteSpace:"nowrap"}}>
-                  + {p.name.split(" ").slice(0,2).join(" ")}
+                <button key={i} onClick={()=>addDeal(p)} style={{flexShrink:0,background:"#1a1a1a",border:"1px solid rgba(201,168,76,0.2)",borderRadius:10,padding:"7px 12px",color:"#c9a84c",fontSize:11,fontFamily:"inherit",cursor:"pointer",whiteSpace:"nowrap",textAlign:"left"}}>
+                  <div>+ {p.name.split(" ").slice(0,2).join(" ")}</div>
+                  <div style={{fontSize:9,color:"#666",marginTop:1}}>{p.store}</div>
                 </button>
               ))}
             </div>
