@@ -1,7 +1,8 @@
 {
-  "weekOf": "June 17, 2026",
-  "updatedAt": "2026-06-17T14:27:13.904Z",
-  "source": "scraped",
+  "weekOf": "June 20, 2026",
+  "updatedAt": "2026-06-21T00:33:13.979Z",
+  "source": "fallback",
+  "fallbackAsOf": "June 20, 2026",
   "deals": [
     {
       "name": "Clairol Root Touch-Up",
@@ -57,6 +58,39 @@
       "ibotta": 0,
       "checkout51": 0,
       "qty": 2
+    },
+    {
+      "name": "Gain Plus Liquid Detergent 75ld/99oz",
+      "store": "Dollar General",
+      "regularPrice": 13.45,
+      "bogo": false,
+      "mfrCoupon": 0,
+      "storeCoupon": 3,
+      "ibotta": 0,
+      "checkout51": 0,
+      "qty": 1
+    },
+    {
+      "name": "Gain Flings 60ct / Original 100ld / Fireworks",
+      "store": "Dollar General",
+      "regularPrice": 15.95,
+      "bogo": false,
+      "mfrCoupon": 0,
+      "storeCoupon": 3,
+      "ibotta": 0,
+      "checkout51": 0,
+      "qty": 1
+    },
+    {
+      "name": "Gain Flings 24ct / Softener 98ld / Sheets / Powder",
+      "store": "Dollar General",
+      "regularPrice": 7.5,
+      "bogo": false,
+      "mfrCoupon": 0,
+      "storeCoupon": 2,
+      "ibotta": 0,
+      "checkout51": 0,
+      "qty": 1
     }
   ]
 }
